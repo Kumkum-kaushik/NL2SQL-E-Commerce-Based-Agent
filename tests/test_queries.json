@@ -1,0 +1,77 @@
+[
+  {
+    "question": "Show all customers",
+    "sql": "SELECT * FROM customers;",
+    "difficulty": "easy"
+  },
+  {
+    "question": "List all products in the Electronics category",
+    "sql": "SELECT * FROM products WHERE category = 'Electronics';",
+    "difficulty": "easy"
+  },
+  {
+    "question": "How many orders have been placed?",
+    "sql": "SELECT COUNT(*) as total_orders FROM orders;",
+    "difficulty": "easy"
+  },
+  {
+    "question": "What is the total revenue from all payments?",
+    "sql": "SELECT SUM(amount) as total_revenue FROM payments;",
+    "difficulty": "easy"
+  },
+  {
+    "question": "Show customers from USA",
+    "sql": "SELECT * FROM customers WHERE country = 'USA';",
+    "difficulty": "easy"
+  },
+  {
+    "question": "List the top 5 most expensive products",
+    "sql": "SELECT * FROM products ORDER BY price DESC LIMIT 5;",
+    "difficulty": "medium"
+  },
+  {
+    "question": "Show total sales by category",
+    "sql": "SELECT p.category, SUM(oi.quantity * oi.unit_price) as total_sales FROM products p JOIN order_items oi ON p.product_id = oi.product_id GROUP BY p.category ORDER BY total_sales DESC;",
+    "difficulty": "medium"
+  },
+  {
+    "question": "Which customers have placed more than one order?",
+    "sql": "SELECT c.name, c.email, COUNT(o.order_id) as order_count FROM customers c JOIN orders o ON c.customer_id = o.customer_id GROUP BY c.customer_id, c.name, c.email HAVING COUNT(o.order_id) > 1;",
+    "difficulty": "medium"
+  },
+  {
+    "question": "What is the average order value?",
+    "sql": "SELECT AVG(amount) as avg_order_value FROM payments;",
+    "difficulty": "medium"
+  },
+  {
+    "question": "Show orders with their customer names and total amounts",
+    "sql": "SELECT o.order_id, c.name as customer_name, p.amount as total_amount, o.order_date FROM orders o JOIN customers c ON o.customer_id = c.customer_id JOIN payments p ON o.order_id = p.order_id;",
+    "difficulty": "medium"
+  },
+  {
+    "question": "Find the most popular product by quantity sold",
+    "sql": "SELECT p.name, SUM(oi.quantity) as total_quantity FROM products p JOIN order_items oi ON p.product_id = oi.product_id GROUP BY p.product_id, p.name ORDER BY total_quantity DESC LIMIT 1;",
+    "difficulty": "difficult"
+  },
+  {
+    "question": "Show monthly revenue for 2024",
+    "sql": "SELECT strftime('%Y-%m', payment_date) as month, SUM(amount) as revenue FROM payments WHERE strftime('%Y', payment_date) = '2024' GROUP BY month ORDER BY month;",
+    "difficulty": "difficult"
+  },
+  {
+    "question": "Which payment method is most commonly used?",
+    "sql": "SELECT payment_method, COUNT(*) as usage_count FROM payments GROUP BY payment_method ORDER BY usage_count DESC LIMIT 1;",
+    "difficulty": "medium"
+  },
+  {
+    "question": "List customers who have never placed an order",
+    "sql": "SELECT c.* FROM customers c LEFT JOIN orders o ON c.customer_id = o.customer_id WHERE o.order_id IS NULL;",
+    "difficulty": "difficult"
+  },
+  {
+    "question": "Show the top 3 customers by total spending",
+    "sql": "SELECT c.name, c.email, SUM(p.amount) as total_spent FROM customers c JOIN orders o ON c.customer_id = o.customer_id JOIN payments p ON o.order_id = p.order_id GROUP BY c.customer_id, c.name, c.email ORDER BY total_spent DESC LIMIT 3;",
+    "difficulty": "difficult"
+  }
+]

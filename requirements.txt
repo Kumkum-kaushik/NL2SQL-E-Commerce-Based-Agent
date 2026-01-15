@@ -1,0 +1,32 @@
+# Web Framework
+fastapi==0.109.0
+uvicorn[standard]==0.27.0
+pydantic==2.5.3
+python-multipart==0.0.6
+
+# Database
+sqlalchemy==2.0.25
+
+# LLM & Agentic Framework
+google-generativeai==0.3.2
+langchain==0.1.4
+langchain-google-genai==0.0.6
+langgraph==0.0.20
+langchain-community==0.0.16
+
+# Vector Store & Embeddings
+sentence-transformers==2.3.1
+faiss-cpu==1.8.0
+numpy==1.26.3
+
+# SQL Validation & Parsing
+sqlglot==20.11.0
+
+# Environment & Configuration
+python-dotenv==1.0.0
+
+# Rate Limiting & Caching
+cachetools==5.3.2
+
+# Optional UI
+streamlit==1.30.0
