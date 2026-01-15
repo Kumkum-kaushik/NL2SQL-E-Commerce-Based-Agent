@@ -1,6 +1,6 @@
 # NL2SQL System - Test Results and Evaluation
 
-**Generated:** 2026-01-15 12:01:58
+**Generated:** 2026-01-15 22:44:46
 
 ---
 
@@ -17,50 +17,54 @@
 | Metric | Value |
 |--------|-------|
 | Total Queries | 15 |
-| Successful Executions | 0 |
-| Valid Queries | 0 |
-| **Success Rate** | **0.0%** |
-| Validation Rate | 0.0% |
-| Avg Generation Time | 0 ms |
-| Avg Execution Time | 0 ms |
-| Min Generation Time | 0 ms |
-| Max Generation Time | 0 ms |
+| Successful Executions | 15 |
+| Accurate Executions | 14 |
+| Valid Queries | 15 |
+| Success Rate | 100.0% |
+| **Accuracy Rate** | **93.33%** |
+| Validation Rate | 100.0% |
+| Avg Generation Time | 705.98 ms |
+| Avg Execution Time | 14.93 ms |
+| Min Generation Time | 418.93 ms |
+| Max Generation Time | 1131.83 ms |
 
 #### Performance by Difficulty
 
-| Difficulty | Total | Successful | Success Rate |
-|------------|-------|------------|-------------|
-| Easy | 5 | 0 | 0.0% |
-| Medium | 6 | 0 | 0.0% |
-| Difficult | 4 | 0 | 0.0% |
+| Difficulty | Total | Successful | Accurate | Success Rate | Accuracy |
+|------------|-------|------------|----------|--------------|----------|
+| Easy | 5 | 5 | 5 | 100.0% | 100.0% |
+| Medium | 6 | 6 | 6 | 100.0% | 100.0% |
+| Difficult | 4 | 4 | 3 | 100.0% | 75.0% |
 
 ### Strategy 2 (Chain-of-Thought)
 
 | Metric | Value |
 |--------|-------|
 | Total Queries | 15 |
-| Successful Executions | 0 |
-| Valid Queries | 0 |
-| **Success Rate** | **0.0%** |
-| Validation Rate | 0.0% |
-| Avg Generation Time | 0 ms |
-| Avg Execution Time | 0 ms |
-| Min Generation Time | 0 ms |
-| Max Generation Time | 0 ms |
+| Successful Executions | 15 |
+| Accurate Executions | 15 |
+| Valid Queries | 15 |
+| Success Rate | 100.0% |
+| **Accuracy Rate** | **100.0%** |
+| Validation Rate | 100.0% |
+| Avg Generation Time | 1175.35 ms |
+| Avg Execution Time | 11.68 ms |
+| Min Generation Time | 540.7 ms |
+| Max Generation Time | 3130.79 ms |
 
 #### Performance by Difficulty
 
-| Difficulty | Total | Successful | Success Rate |
-|------------|-------|------------|-------------|
-| Easy | 5 | 0 | 0.0% |
-| Medium | 6 | 0 | 0.0% |
-| Difficult | 4 | 0 | 0.0% |
+| Difficulty | Total | Successful | Accurate | Success Rate | Accuracy |
+|------------|-------|------------|----------|--------------|----------|
+| Easy | 5 | 5 | 5 | 100.0% | 100.0% |
+| Medium | 6 | 6 | 6 | 100.0% | 100.0% |
+| Difficult | 4 | 4 | 4 | 100.0% | 100.0% |
 
 ## Detailed Test Results
 
 ### Strategy 1: Schema-First
 
-#### Test 1: ✗ FAIL
+#### Test 1: ✓ ACCURATE
 
 **Question:** Show all customers
 
@@ -68,61 +72,16 @@
 
 **Generated SQL:**
 ```sql
-N/A
+SELECT * FROM customers;
 ```
 
-- **Error:** Failed to generate SQL after 3 attempts: Gemini API quota exceeded. This shouldn't happen with rate limiting enabled. Error: 429 You exceeded your current quota, please check your plan and billing details. For more information on this error, head to: https://ai.google.dev/gemini-api/docs/rate-limits. To monitor your current usage, head to: https://ai.dev/rate-limit. 
-* Quota exceeded for metric: generativelanguage.googleapis.com/generate_content_free_tier_requests, limit: 0, model: gemini-2.0-flash-exp
-* Quota exceeded for metric: generativelanguage.googleapis.com/generate_content_free_tier_requests, limit: 0, model: gemini-2.0-flash-exp
-* Quota exceeded for metric: generativelanguage.googleapis.com/generate_content_free_tier_input_token_count, limit: 0, model: gemini-2.0-flash-exp
-Please retry in 5.665517982s. [links {
-  description: "Learn more about Gemini API quotas"
-  url: "https://ai.google.dev/gemini-api/docs/rate-limits"
-}
-, violations {
-  quota_metric: "generativelanguage.googleapis.com/generate_content_free_tier_requests"
-  quota_id: "GenerateRequestsPerDayPerProjectPerModel-FreeTier"
-  quota_dimensions {
-    key: "model"
-    value: "gemini-2.0-flash-exp"
-  }
-  quota_dimensions {
-    key: "location"
-    value: "global"
-  }
-}
-violations {
-  quota_metric: "generativelanguage.googleapis.com/generate_content_free_tier_requests"
-  quota_id: "GenerateRequestsPerMinutePerProjectPerModel-FreeTier"
-  quota_dimensions {
-    key: "model"
-    value: "gemini-2.0-flash-exp"
-  }
-  quota_dimensions {
-    key: "location"
-    value: "global"
-  }
-}
-violations {
-  quota_metric: "generativelanguage.googleapis.com/generate_content_free_tier_input_token_count"
-  quota_id: "GenerateContentInputTokensPerModelPerMinute-FreeTier"
-  quota_dimensions {
-    key: "model"
-    value: "gemini-2.0-flash-exp"
-  }
-  quota_dimensions {
-    key: "location"
-    value: "global"
-  }
-}
-, retry_delay {
-  seconds: 5
-}
-]
+- Generation Time: 1012.87 ms
+- Execution Time: 4.84 ms
+- Rows Returned: 100
 
 ---
 
-#### Test 2: ✗ FAIL
+#### Test 2: ✓ ACCURATE
 
 **Question:** List all products in the Electronics category
 
@@ -130,61 +89,16 @@ violations {
 
 **Generated SQL:**
 ```sql
-N/A
+SELECT * FROM products WHERE category = 'Electronics';
 ```
 
-- **Error:** Failed to generate SQL after 3 attempts: Gemini API quota exceeded. This shouldn't happen with rate limiting enabled. Error: 429 You exceeded your current quota, please check your plan and billing details. For more information on this error, head to: https://ai.google.dev/gemini-api/docs/rate-limits. To monitor your current usage, head to: https://ai.dev/rate-limit. 
-* Quota exceeded for metric: generativelanguage.googleapis.com/generate_content_free_tier_input_token_count, limit: 0, model: gemini-2.0-flash-exp
-* Quota exceeded for metric: generativelanguage.googleapis.com/generate_content_free_tier_requests, limit: 0, model: gemini-2.0-flash-exp
-* Quota exceeded for metric: generativelanguage.googleapis.com/generate_content_free_tier_requests, limit: 0, model: gemini-2.0-flash-exp
-Please retry in 4.889135258s. [links {
-  description: "Learn more about Gemini API quotas"
-  url: "https://ai.google.dev/gemini-api/docs/rate-limits"
-}
-, violations {
-  quota_metric: "generativelanguage.googleapis.com/generate_content_free_tier_input_token_count"
-  quota_id: "GenerateContentInputTokensPerModelPerMinute-FreeTier"
-  quota_dimensions {
-    key: "model"
-    value: "gemini-2.0-flash-exp"
-  }
-  quota_dimensions {
-    key: "location"
-    value: "global"
-  }
-}
-violations {
-  quota_metric: "generativelanguage.googleapis.com/generate_content_free_tier_requests"
-  quota_id: "GenerateRequestsPerMinutePerProjectPerModel-FreeTier"
-  quota_dimensions {
-    key: "model"
-    value: "gemini-2.0-flash-exp"
-  }
-  quota_dimensions {
-    key: "location"
-    value: "global"
-  }
-}
-violations {
-  quota_metric: "generativelanguage.googleapis.com/generate_content_free_tier_requests"
-  quota_id: "GenerateRequestsPerDayPerProjectPerModel-FreeTier"
-  quota_dimensions {
-    key: "model"
-    value: "gemini-2.0-flash-exp"
-  }
-  quota_dimensions {
-    key: "location"
-    value: "global"
-  }
-}
-, retry_delay {
-  seconds: 4
-}
-]
+- Generation Time: 1131.83 ms
+- Execution Time: 19.73 ms
+- Rows Returned: 4
 
 ---
 
-#### Test 3: ✗ FAIL
+#### Test 3: ✓ ACCURATE
 
 **Question:** How many orders have been placed?
 
@@ -192,61 +106,16 @@ violations {
 
 **Generated SQL:**
 ```sql
-N/A
+SELECT COUNT(*) as total_orders FROM orders;
 ```
 
-- **Error:** Failed to generate SQL after 3 attempts: Gemini API quota exceeded. This shouldn't happen with rate limiting enabled. Error: 429 You exceeded your current quota, please check your plan and billing details. For more information on this error, head to: https://ai.google.dev/gemini-api/docs/rate-limits. To monitor your current usage, head to: https://ai.dev/rate-limit. 
-* Quota exceeded for metric: generativelanguage.googleapis.com/generate_content_free_tier_input_token_count, limit: 0, model: gemini-2.0-flash-exp
-* Quota exceeded for metric: generativelanguage.googleapis.com/generate_content_free_tier_requests, limit: 0, model: gemini-2.0-flash-exp
-* Quota exceeded for metric: generativelanguage.googleapis.com/generate_content_free_tier_requests, limit: 0, model: gemini-2.0-flash-exp
-Please retry in 4.273570919s. [links {
-  description: "Learn more about Gemini API quotas"
-  url: "https://ai.google.dev/gemini-api/docs/rate-limits"
-}
-, violations {
-  quota_metric: "generativelanguage.googleapis.com/generate_content_free_tier_input_token_count"
-  quota_id: "GenerateContentInputTokensPerModelPerMinute-FreeTier"
-  quota_dimensions {
-    key: "model"
-    value: "gemini-2.0-flash-exp"
-  }
-  quota_dimensions {
-    key: "location"
-    value: "global"
-  }
-}
-violations {
-  quota_metric: "generativelanguage.googleapis.com/generate_content_free_tier_requests"
-  quota_id: "GenerateRequestsPerMinutePerProjectPerModel-FreeTier"
-  quota_dimensions {
-    key: "model"
-    value: "gemini-2.0-flash-exp"
-  }
-  quota_dimensions {
-    key: "location"
-    value: "global"
-  }
-}
-violations {
-  quota_metric: "generativelanguage.googleapis.com/generate_content_free_tier_requests"
-  quota_id: "GenerateRequestsPerDayPerProjectPerModel-FreeTier"
-  quota_dimensions {
-    key: "model"
-    value: "gemini-2.0-flash-exp"
-  }
-  quota_dimensions {
-    key: "location"
-    value: "global"
-  }
-}
-, retry_delay {
-  seconds: 4
-}
-]
+- Generation Time: 525.46 ms
+- Execution Time: 18.72 ms
+- Rows Returned: 1
 
 ---
 
-#### Test 4: ✗ FAIL
+#### Test 4: ✓ ACCURATE
 
 **Question:** What is the total revenue from all payments?
 
@@ -254,14 +123,16 @@ violations {
 
 **Generated SQL:**
 ```sql
-N/A
+SELECT SUM(amount) as total_revenue FROM payments;
 ```
 
-- **Error:** Failed to generate SQL after 3 attempts: Rate limit exceeded. Please wait 52 seconds. Limits: 10 requests/min, 1500 requests/day
+- Generation Time: 719.67 ms
+- Execution Time: 4.13 ms
+- Rows Returned: 1
 
 ---
 
-#### Test 5: ✗ FAIL
+#### Test 5: ✓ ACCURATE
 
 **Question:** Show customers from USA
 
@@ -269,14 +140,16 @@ N/A
 
 **Generated SQL:**
 ```sql
-N/A
+SELECT * FROM customers WHERE country = 'USA';
 ```
 
-- **Error:** Failed to generate SQL after 3 attempts: Rate limit exceeded. Please wait 51 seconds. Limits: 10 requests/min, 1500 requests/day
+- Generation Time: 484.01 ms
+- Execution Time: 5.52 ms
+- Rows Returned: 100
 
 ---
 
-#### Test 6: ✗ FAIL
+#### Test 6: ✓ ACCURATE
 
 **Question:** List the top 5 most expensive products
 
@@ -284,14 +157,16 @@ N/A
 
 **Generated SQL:**
 ```sql
-N/A
+SELECT * FROM products ORDER BY price DESC LIMIT 5;
 ```
 
-- **Error:** Failed to generate SQL after 3 attempts: Rate limit exceeded. Please wait 51 seconds. Limits: 10 requests/min, 1500 requests/day
+- Generation Time: 454.76 ms
+- Execution Time: 1.5 ms
+- Rows Returned: 5
 
 ---
 
-#### Test 7: ✗ FAIL
+#### Test 7: ✓ ACCURATE
 
 **Question:** Show total sales by category
 
@@ -299,14 +174,16 @@ N/A
 
 **Generated SQL:**
 ```sql
-N/A
+SELECT p.category, SUM(oi.quantity * oi.unit_price) as total_sales FROM products p JOIN order_items oi ON p.product_id = oi.product_id GROUP BY p.category ORDER BY total_sales DESC;
 ```
 
-- **Error:** Failed to generate SQL after 3 attempts: Rate limit exceeded. Please wait 51 seconds. Limits: 10 requests/min, 1500 requests/day
+- Generation Time: 418.93 ms
+- Execution Time: 21.37 ms
+- Rows Returned: 6
 
 ---
 
-#### Test 8: ✗ FAIL
+#### Test 8: ✓ ACCURATE
 
 **Question:** Which customers have placed more than one order?
 
@@ -314,14 +191,16 @@ N/A
 
 **Generated SQL:**
 ```sql
-N/A
+SELECT c.name, c.email, COUNT(o.order_id) as order_count FROM customers c JOIN orders o ON c.customer_id = o.customer_id GROUP BY c.customer_id, c.name, c.email HAVING COUNT(o.order_id) > 1;
 ```
 
-- **Error:** Failed to generate SQL after 3 attempts: Rate limit exceeded. Please wait 51 seconds. Limits: 10 requests/min, 1500 requests/day
+- Generation Time: 884.87 ms
+- Execution Time: 28.91 ms
+- Rows Returned: 100
 
 ---
 
-#### Test 9: ✗ FAIL
+#### Test 9: ✓ ACCURATE
 
 **Question:** What is the average order value?
 
@@ -329,14 +208,16 @@ N/A
 
 **Generated SQL:**
 ```sql
-N/A
+SELECT AVG(amount) as avg_order_value FROM payments;
 ```
 
-- **Error:** Failed to generate SQL after 3 attempts: Rate limit exceeded. Please wait 51 seconds. Limits: 10 requests/min, 1500 requests/day
+- Generation Time: 843.9 ms
+- Execution Time: 3.24 ms
+- Rows Returned: 1
 
 ---
 
-#### Test 10: ✗ FAIL
+#### Test 10: ✓ ACCURATE
 
 **Question:** Show orders with their customer names and total amounts
 
@@ -344,14 +225,16 @@ N/A
 
 **Generated SQL:**
 ```sql
-N/A
+SELECT o.order_id, c.name as customer_name, SUM(oi.quantity * oi.unit_price) as total_amount, o.order_date FROM orders o JOIN customers c ON o.customer_id = c.customer_id JOIN order_items oi ON o.order_id = oi.order_id GROUP BY o.order_id, c.name, o.order_date
 ```
 
-- **Error:** Failed to generate SQL after 3 attempts: Rate limit exceeded. Please wait 51 seconds. Limits: 10 requests/min, 1500 requests/day
+- Generation Time: 447.86 ms
+- Execution Time: 23.59 ms
+- Rows Returned: 100
 
 ---
 
-#### Test 11: ✗ FAIL
+#### Test 11: ✓ ACCURATE
 
 **Question:** Find the most popular product by quantity sold
 
@@ -359,14 +242,16 @@ N/A
 
 **Generated SQL:**
 ```sql
-N/A
+SELECT p.name, SUM(oi.quantity) as total_quantity FROM products p JOIN order_items oi ON p.product_id = oi.product_id GROUP BY p.product_id, p.name ORDER BY total_quantity DESC LIMIT 1;
 ```
 
-- **Error:** Failed to generate SQL after 3 attempts: Rate limit exceeded. Please wait 51 seconds. Limits: 10 requests/min, 1500 requests/day
+- Generation Time: 500.86 ms
+- Execution Time: 20.95 ms
+- Rows Returned: 1
 
 ---
 
-#### Test 12: ✗ FAIL
+#### Test 12: ✓ PASS (Exec Only)
 
 **Question:** Show monthly revenue for 2024
 
@@ -374,14 +259,16 @@ N/A
 
 **Generated SQL:**
 ```sql
-N/A
+SELECT TO_CHAR(payment_date, 'YYYY-MM') as month, SUM(amount) as revenue FROM payments WHERE EXTRACT(YEAR FROM payment_date) = 2024 GROUP BY month ORDER BY month;
 ```
 
-- **Error:** Failed to generate SQL after 3 attempts: Rate limit exceeded. Please wait 51 seconds. Limits: 10 requests/min, 1500 requests/day
+- Generation Time: 674.56 ms
+- Execution Time: 0.0 ms
+- Rows Returned: 0
 
 ---
 
-#### Test 13: ✗ FAIL
+#### Test 13: ✓ ACCURATE
 
 **Question:** Which payment method is most commonly used?
 
@@ -389,14 +276,16 @@ N/A
 
 **Generated SQL:**
 ```sql
-N/A
+SELECT payment_method, COUNT(*) as usage_count FROM payments GROUP BY payment_method ORDER BY usage_count DESC LIMIT 1;
 ```
 
-- **Error:** Failed to generate SQL after 3 attempts: Rate limit exceeded. Please wait 51 seconds. Limits: 10 requests/min, 1500 requests/day
+- Generation Time: 981.98 ms
+- Execution Time: 9.82 ms
+- Rows Returned: 1
 
 ---
 
-#### Test 14: ✗ FAIL
+#### Test 14: ✓ ACCURATE
 
 **Question:** List customers who have never placed an order
 
@@ -404,14 +293,16 @@ N/A
 
 **Generated SQL:**
 ```sql
-N/A
+SELECT c.* FROM customers c LEFT JOIN orders o ON c.customer_id = o.customer_id WHERE o.order_id IS NULL;
 ```
 
-- **Error:** Failed to generate SQL after 3 attempts: Rate limit exceeded. Please wait 51 seconds. Limits: 10 requests/min, 1500 requests/day
+- Generation Time: 917.58 ms
+- Execution Time: 25.14 ms
+- Rows Returned: 0
 
 ---
 
-#### Test 15: ✗ FAIL
+#### Test 15: ✓ ACCURATE
 
 **Question:** Show the top 3 customers by total spending
 
@@ -419,16 +310,18 @@ N/A
 
 **Generated SQL:**
 ```sql
-N/A
+SELECT c.name, c.email, SUM(p.amount) as total_spent FROM customers c JOIN orders o ON c.customer_id = o.customer_id JOIN payments p ON o.order_id = p.order_id GROUP BY c.customer_id, c.name, c.email ORDER BY total_spent DESC LIMIT 3;
 ```
 
-- **Error:** Failed to generate SQL after 3 attempts: Rate limit exceeded. Please wait 51 seconds. Limits: 10 requests/min, 1500 requests/day
+- Generation Time: 590.55 ms
+- Execution Time: 36.52 ms
+- Rows Returned: 3
 
 ---
 
 ### Strategy 2: Chain-of-Thought
 
-#### Test 1: ✗ FAIL
+#### Test 1: ✓ ACCURATE
 
 **Question:** Show all customers
 
@@ -436,14 +329,16 @@ N/A
 
 **Generated SQL:**
 ```sql
-N/A
+SELECT * FROM customers;
 ```
 
-- **Error:** Failed to generate SQL after 3 attempts: Rate limit exceeded. Please wait 51 seconds. Limits: 10 requests/min, 1500 requests/day
+- Generation Time: 661.29 ms
+- Execution Time: 2.0 ms
+- Rows Returned: 100
 
 ---
 
-#### Test 2: ✗ FAIL
+#### Test 2: ✓ ACCURATE
 
 **Question:** List all products in the Electronics category
 
@@ -451,14 +346,16 @@ N/A
 
 **Generated SQL:**
 ```sql
-N/A
+SELECT * FROM products WHERE category = 'Electronics';
 ```
 
-- **Error:** Failed to generate SQL after 3 attempts: Rate limit exceeded. Please wait 51 seconds. Limits: 10 requests/min, 1500 requests/day
+- Generation Time: 1504.64 ms
+- Execution Time: 1.02 ms
+- Rows Returned: 4
 
 ---
 
-#### Test 3: ✗ FAIL
+#### Test 3: ✓ ACCURATE
 
 **Question:** How many orders have been placed?
 
@@ -466,14 +363,16 @@ N/A
 
 **Generated SQL:**
 ```sql
-N/A
+SELECT COUNT(*) as total_orders FROM orders;
 ```
 
-- **Error:** Failed to generate SQL after 3 attempts: Rate limit exceeded. Please wait 51 seconds. Limits: 10 requests/min, 1500 requests/day
+- Generation Time: 1046.73 ms
+- Execution Time: 1.54 ms
+- Rows Returned: 1
 
 ---
 
-#### Test 4: ✗ FAIL
+#### Test 4: ✓ ACCURATE
 
 **Question:** What is the total revenue from all payments?
 
@@ -481,14 +380,16 @@ N/A
 
 **Generated SQL:**
 ```sql
-N/A
+SELECT SUM(amount) as total_revenue FROM payments;
 ```
 
-- **Error:** Failed to generate SQL after 3 attempts: Rate limit exceeded. Please wait 51 seconds. Limits: 10 requests/min, 1500 requests/day
+- Generation Time: 540.7 ms
+- Execution Time: 3.21 ms
+- Rows Returned: 1
 
 ---
 
-#### Test 5: ✗ FAIL
+#### Test 5: ✓ ACCURATE
 
 **Question:** Show customers from USA
 
@@ -496,14 +397,16 @@ N/A
 
 **Generated SQL:**
 ```sql
-N/A
+SELECT * FROM customers WHERE country = 'USA';
 ```
 
-- **Error:** Failed to generate SQL after 3 attempts: Rate limit exceeded. Please wait 51 seconds. Limits: 10 requests/min, 1500 requests/day
+- Generation Time: 664.36 ms
+- Execution Time: 2.54 ms
+- Rows Returned: 100
 
 ---
 
-#### Test 6: ✗ FAIL
+#### Test 6: ✓ ACCURATE
 
 **Question:** List the top 5 most expensive products
 
@@ -511,14 +414,16 @@ N/A
 
 **Generated SQL:**
 ```sql
-N/A
+SELECT * FROM products ORDER BY price DESC LIMIT 5;
 ```
 
-- **Error:** Failed to generate SQL after 3 attempts: Rate limit exceeded. Please wait 51 seconds. Limits: 10 requests/min, 1500 requests/day
+- Generation Time: 631.4 ms
+- Execution Time: 1.52 ms
+- Rows Returned: 5
 
 ---
 
-#### Test 7: ✗ FAIL
+#### Test 7: ✓ ACCURATE
 
 **Question:** Show total sales by category
 
@@ -526,14 +431,16 @@ N/A
 
 **Generated SQL:**
 ```sql
-N/A
+SELECT p.category, SUM(oi.quantity * oi.unit_price) as total_sales FROM products p JOIN order_items oi ON p.product_id = oi.product_id GROUP BY p.category ORDER BY total_sales DESC;
 ```
 
-- **Error:** Failed to generate SQL after 3 attempts: Rate limit exceeded. Please wait 51 seconds. Limits: 10 requests/min, 1500 requests/day
+- Generation Time: 1558.73 ms
+- Execution Time: 14.59 ms
+- Rows Returned: 6
 
 ---
 
-#### Test 8: ✗ FAIL
+#### Test 8: ✓ ACCURATE
 
 **Question:** Which customers have placed more than one order?
 
@@ -541,14 +448,16 @@ N/A
 
 **Generated SQL:**
 ```sql
-N/A
+SELECT c.name, c.email, COUNT(o.order_id) as order_count FROM customers c JOIN orders o ON c.customer_id = o.customer_id GROUP BY c.customer_id, c.name, c.email HAVING COUNT(o.order_id) > 1;
 ```
 
-- **Error:** Failed to generate SQL after 3 attempts: Rate limit exceeded. Please wait 51 seconds. Limits: 10 requests/min, 1500 requests/day
+- Generation Time: 1348.76 ms
+- Execution Time: 17.6 ms
+- Rows Returned: 100
 
 ---
 
-#### Test 9: ✗ FAIL
+#### Test 9: ✓ ACCURATE
 
 **Question:** What is the average order value?
 
@@ -556,14 +465,16 @@ N/A
 
 **Generated SQL:**
 ```sql
-N/A
+SELECT AVG(amount) as avg_order_value FROM payments;
 ```
 
-- **Error:** Failed to generate SQL after 3 attempts: Rate limit exceeded. Please wait 51 seconds. Limits: 10 requests/min, 1500 requests/day
+- Generation Time: 1148.08 ms
+- Execution Time: 2.01 ms
+- Rows Returned: 1
 
 ---
 
-#### Test 10: ✗ FAIL
+#### Test 10: ✓ ACCURATE
 
 **Question:** Show orders with their customer names and total amounts
 
@@ -571,14 +482,16 @@ N/A
 
 **Generated SQL:**
 ```sql
-N/A
+SELECT o.order_id, c.name as customer_name, p.amount as total_amount, o.order_date FROM orders o JOIN customers c ON o.customer_id = c.customer_id JOIN payments p ON o.order_id = p.order_id;
 ```
 
-- **Error:** Failed to generate SQL after 3 attempts: Rate limit exceeded. Please wait 51 seconds. Limits: 10 requests/min, 1500 requests/day
+- Generation Time: 708.23 ms
+- Execution Time: 2.53 ms
+- Rows Returned: 100
 
 ---
 
-#### Test 11: ✗ FAIL
+#### Test 11: ✓ ACCURATE
 
 **Question:** Find the most popular product by quantity sold
 
@@ -586,14 +499,16 @@ N/A
 
 **Generated SQL:**
 ```sql
-N/A
+SELECT p.name, SUM(oi.quantity) as total_quantity FROM products p JOIN order_items oi ON p.product_id = oi.product_id GROUP BY p.product_id, p.name ORDER BY total_quantity DESC LIMIT 1;
 ```
 
-- **Error:** Failed to generate SQL after 3 attempts: Rate limit exceeded. Please wait 51 seconds. Limits: 10 requests/min, 1500 requests/day
+- Generation Time: 3130.79 ms
+- Execution Time: 22.62 ms
+- Rows Returned: 1
 
 ---
 
-#### Test 12: ✗ FAIL
+#### Test 12: ✓ ACCURATE
 
 **Question:** Show monthly revenue for 2024
 
@@ -601,14 +516,16 @@ N/A
 
 **Generated SQL:**
 ```sql
-N/A
+SELECT strftime('%Y-%m', payment_date) as month, SUM(amount) as revenue FROM payments WHERE strftime('%Y', payment_date) = '2024' GROUP BY month ORDER BY month;
 ```
 
-- **Error:** Failed to generate SQL after 3 attempts: Rate limit exceeded. Please wait 51 seconds. Limits: 10 requests/min, 1500 requests/day
+- Generation Time: 603.61 ms
+- Execution Time: 23.85 ms
+- Rows Returned: 12
 
 ---
 
-#### Test 13: ✗ FAIL
+#### Test 13: ✓ ACCURATE
 
 **Question:** Which payment method is most commonly used?
 
@@ -616,14 +533,16 @@ N/A
 
 **Generated SQL:**
 ```sql
-N/A
+SELECT payment_method, COUNT(*) as usage_count FROM payments GROUP BY payment_method ORDER BY usage_count DESC LIMIT 1;
 ```
 
-- **Error:** Failed to generate SQL after 3 attempts: Rate limit exceeded. Please wait 51 seconds. Limits: 10 requests/min, 1500 requests/day
+- Generation Time: 929.62 ms
+- Execution Time: 8.54 ms
+- Rows Returned: 1
 
 ---
 
-#### Test 14: ✗ FAIL
+#### Test 14: ✓ ACCURATE
 
 **Question:** List customers who have never placed an order
 
@@ -631,14 +550,16 @@ N/A
 
 **Generated SQL:**
 ```sql
-N/A
+SELECT c.* FROM customers c LEFT JOIN orders o ON c.customer_id = o.customer_id WHERE o.order_id IS NULL;
 ```
 
-- **Error:** Failed to generate SQL after 3 attempts: Rate limit exceeded. Please wait 51 seconds. Limits: 10 requests/min, 1500 requests/day
+- Generation Time: 1779.04 ms
+- Execution Time: 29.59 ms
+- Rows Returned: 0
 
 ---
 
-#### Test 15: ✗ FAIL
+#### Test 15: ✓ ACCURATE
 
 **Question:** Show the top 3 customers by total spending
 
@@ -646,10 +567,12 @@ N/A
 
 **Generated SQL:**
 ```sql
-N/A
+SELECT c.name, c.email, SUM(p.amount) as total_spent FROM customers c JOIN orders o ON c.customer_id = o.customer_id JOIN payments p ON o.order_id = p.order_id GROUP BY c.customer_id, c.name, c.email ORDER BY total_spent DESC LIMIT 3;
 ```
 
-- **Error:** Failed to generate SQL after 3 attempts: Rate limit exceeded. Please wait 51 seconds. Limits: 10 requests/min, 1500 requests/day
+- Generation Time: 1374.3 ms
+- Execution Time: 42.02 ms
+- Rows Returned: 3
 
 ---
 

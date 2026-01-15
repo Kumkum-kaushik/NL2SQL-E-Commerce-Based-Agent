@@ -1,7 +1,7 @@
 import re
 import sqlglot
 from typing import Tuple, List
-from nl2sql.database import get_schema_info
+from nl2sql.database import db_manager
 
 # Dangerous SQL keywords that should be blocked
 UNSAFE_KEYWORDS = [
@@ -33,7 +33,7 @@ def validate_sql(sql_query: str, allowed_tables: List[str] = None) -> Tuple[bool
     
     # 2. Syntax validation using sqlglot
     try:
-        parsed = sqlglot.parse_one(sql_query, read='sqlite')
+        parsed = sqlglot.parse_one(sql_query, read='postgres')
         if not parsed:
             return False, "Failed to parse SQL query"
     except Exception as e:
@@ -41,7 +41,7 @@ def validate_sql(sql_query: str, allowed_tables: List[str] = None) -> Tuple[bool
     
     # 3. Schema validation - check tables and columns exist
     try:
-        schema_info = get_schema_info()
+        schema_info = db_manager.get_schema_info()
         
         if allowed_tables is None:
             allowed_tables = list(schema_info.keys())
@@ -86,7 +86,7 @@ def validate_sql(sql_query: str, allowed_tables: List[str] = None) -> Tuple[bool
 def extract_tables_from_query(sql_query: str) -> List[str]:
     """Extract table names from SQL query."""
     try:
-        parsed = sqlglot.parse_one(sql_query, read='sqlite')
+        parsed = sqlglot.parse_one(sql_query, read='postgres')
         tables = []
         for table in parsed.find_all(sqlglot.exp.Table):
             tables.append(table.name)

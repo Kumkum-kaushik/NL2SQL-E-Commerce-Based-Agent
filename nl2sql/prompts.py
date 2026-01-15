@@ -1,46 +1,38 @@
-from nl2sql.database import get_schema_info
+from nl2sql.database import db_manager
 
-def get_schema_description() -> str:
+def get_schema_description(relevant_tables: list = None) -> str:
     """
-    Get formatted schema description for prompt injection.
-    
-    Returns:
-        Formatted schema string with tables and columns
+    Get formatted schema description. Use Graph retrieval if tables provided.
     """
-    schema_info = get_schema_info()
+    if relevant_tables:
+        return db_manager.get_relevant_schema_subgraph(relevant_tables)
     
-    schema_lines = []
+    # Fallback to full schema if no tables specified
+    schema_info = db_manager.get_schema_info()
+    schema_lines = ["Full Database Schema:"]
     for table_name, columns in schema_info.items():
-        col_defs = []
-        for col in columns:
-            col_str = f"{col['name']} {col['type']}"
-            if col['pk']:
-                col_str += " PRIMARY KEY"
-            col_defs.append(col_str)
-        
-        schema_lines.append(f"{table_name}({', '.join(col_defs)})")
+        col_defs = [f"{col['name']} ({col['type']}){ ' [PK]' if col['pk'] else ''}" for col in columns]
+        schema_lines.append(f"Table {table_name}: {', '.join(col_defs)}")
     
     return "\n".join(schema_lines)
 
 
 # Strategy 1: Schema-first with few-shot examples
-STRATEGY_1_SYSTEM = """You are an expert SQL query generator for SQLite databases.
+STRATEGY_1_SYSTEM = """You are an expert SQL query generator.
+Your task is to convert natural language questions into valid SQL queries for a PostgreSQL database.
 
-Your task is to convert natural language questions into valid SQL queries.
-
-Database Schema:
+Database Schema Context:
 {schema}
 
 Few-Shot Examples:
 {examples}
 
 Rules:
-1. Generate ONLY SELECT queries
-2. DO NOT use DROP, DELETE, UPDATE, INSERT, TRUNCATE, ALTER, or CREATE
-3. Use correct table and column names from the schema
-4. Return ONLY the SQL query, no explanations
-5. Use proper SQL syntax for SQLite
-6. Add LIMIT clauses when appropriate to avoid large result sets
+1. Generate ONLY SELECT queries.
+2. Use correct table and column names from the provided schema.
+3. Use proper SQL syntax (PostgreSQL).
+4. Return ONLY the SQL query, no explanations or markdown code blocks.
+5. Add LIMIT clauses when appropriate.
 
 Question: {question}
 
@@ -48,28 +40,25 @@ SQL Query:"""
 
 
 # Strategy 2: Chain-of-thought reasoning
-STRATEGY_2_SYSTEM = """You are an expert SQL query generator for SQLite databases.
-
+STRATEGY_2_SYSTEM = """You are an expert SQL query generator.
 Your task is to convert natural language questions into valid SQL queries using step-by-step reasoning.
 
-Database Schema:
+Database Schema Context:
 {schema}
 
 Few-Shot Examples:
 {examples}
 
 Process:
-1. Identify which tables are needed
-2. Identify which columns are required
-3. Determine any JOIN conditions
-4. Identify any WHERE, GROUP BY, or ORDER BY clauses
-5. Construct the final SQL query
+1. Identify required tables and relationships based on the Graph schema provided.
+2. Identify which columns are required.
+3. Determine JOIN conditions.
+4. Construct the final PostgreSQL query.
 
 Rules:
-- Generate ONLY SELECT queries
-- DO NOT use DROP, DELETE, UPDATE, INSERT, TRUNCATE, ALTER, or CREATE
-- Use correct table and column names from the schema
-- Return ONLY the SQL query at the end, no explanations
+- Generate ONLY SELECT queries.
+- Return ONLY the final SQL query at the end.
+- Syntax: PostgreSQL.
 
 Question: {question}
 

@@ -77,6 +77,7 @@ class RateLimiter:
             True if request is allowed, False if rate limit exceeded
         """
         start_time = time.time()
+        has_logged_warning = False
         
         while True:
             with self._lock:
@@ -98,11 +99,12 @@ class RateLimiter:
                     
                     # Determine which limit was hit
                     limit_type = "minute" if self.minute_tokens <= 0 else "day"
-                    logger.warning(
-                        f"Rate limit exceeded ({limit_type}): "
-                        f"minute={self.minute_tokens}/{self.rpm_limit}, "
-                        f"day={self.day_tokens}/{self.rpd_limit}"
-                    )
+                    if not has_logged_warning:
+                        logger.warning(
+                            f"Rate limit reached ({limit_type}). Waiting for token refill... "
+                            f"(minute={self.minute_tokens}/{self.rpm_limit}, day={self.day_tokens}/{self.rpd_limit})"
+                        )
+                        has_logged_warning = True
                     
                     if not blocking:
                         return False

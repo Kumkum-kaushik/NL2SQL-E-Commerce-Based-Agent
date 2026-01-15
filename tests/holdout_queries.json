@@ -1,0 +1,37 @@
+[
+    {
+        "question": "List all customers from Canada",
+        "sql": "SELECT * FROM customers WHERE country = 'Canada';",
+        "difficulty": "easy"
+    },
+    {
+        "question": "Show products with price greater than 100",
+        "sql": "SELECT * FROM products WHERE price > 100;",
+        "difficulty": "easy"
+    },
+    {
+        "question": "Count the number of orders for each status",
+        "sql": "SELECT status, COUNT(*) as order_count FROM orders GROUP BY status;",
+        "difficulty": "medium"
+    },
+    {
+        "question": "How many products are out of stock?",
+        "sql": "SELECT COUNT(*) as out_of_stock_count FROM products WHERE stock_quantity = 0;",
+        "difficulty": "medium"
+    },
+    {
+        "question": "Show total payments made by each customer",
+        "sql": "SELECT c.name, SUM(p.amount) as total_paid FROM customers c JOIN orders o ON c.customer_id = o.customer_id JOIN payments p ON o.order_id = p.order_id GROUP BY c.customer_id, c.name;",
+        "difficulty": "difficult"
+    },
+    {
+        "question": "Which products have never been sold?",
+        "sql": "SELECT p.* FROM products p LEFT JOIN order_items oi ON p.product_id = oi.product_id WHERE oi.order_item_id IS NULL;",
+        "difficulty": "difficult"
+    },
+    {
+        "question": "Find the average price of products in the 'Toys' category",
+        "sql": "SELECT AVG(price) as avg_price FROM products WHERE category = 'Toys';",
+        "difficulty": "difficult"
+    }
+]

@@ -1,6 +1,7 @@
 import logging
 from nl2sql.fewshot_store import FewShotStore
 from nl2sql.llm_client import call_llm
+from nl2sql.database import db_manager
 from nl2sql.prompts import (
     get_schema_description,
     generate_prompt_strategy1,
@@ -9,6 +10,7 @@ from nl2sql.prompts import (
 )
 from nl2sql.validator import validate_sql
 from pathlib import Path
+import re
 
 # Configure logging
 logger = logging.getLogger(__name__)
@@ -17,14 +19,43 @@ logger = logging.getLogger(__name__)
 EXAMPLES_FILE = Path(__file__).parent.parent / "tests" / "test_queries.json"
 store = FewShotStore(str(EXAMPLES_FILE))
 
+def extract_relevant_tables(question: str) -> list:
+    """
+    Extract potentially relevant tables from the question.
+    Uses a simple keyword matching against the schema.
+    """
+    schema_info = db_manager.get_schema_info()
+    tables = list(schema_info.keys())
+    
+    relevant = []
+    # Simple regex match for table names in question
+    for table in tables:
+        # Check if table name or its plural/singular forms are in question
+        if table.lower() in question.lower() or table[:-1].lower() in question.lower():
+            relevant.append(table)
+            
+    # Heuristic for common mentions: 'product' -> 'products', 'customer' -> 'customers'
+    if not relevant:
+        if 'product' in question.lower(): relevant.append('products')
+        if 'customer' in question.lower(): relevant.append('customers')
+        if 'order' in question.lower(): relevant.append('orders')
+        if 'payment' in question.lower(): relevant.append('payments')
+        if 'item' in question.lower(): relevant.append('order_items')
+
+    logger.info(f"Identified potential tables: {relevant}")
+    return list(set(relevant))
+
 def nl_to_sql(question: str, strategy: int = 1, max_retries: int = 2) -> str:
     """
     Convert natural language question to SQL query with self-correction.
     """
     logger.info(f"Generating SQL for question: '{question}' with strategy {strategy}")
     
-    # Get schema
-    schema = get_schema_description()
+    # Step 1: Extract relevant tables using keywords/heuristics
+    relevant_tables = extract_relevant_tables(question)
+    
+    # Step 2: Get Graph-enhanced schema description
+    schema = get_schema_description(relevant_tables)
     
     # Retrieve similar examples using RAG
     examples = store.retrieve(question, top_k=5)

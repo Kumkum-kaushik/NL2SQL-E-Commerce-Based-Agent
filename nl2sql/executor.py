@@ -1,6 +1,6 @@
-import sqlite3
 from typing import List, Dict, Any
-from nl2sql.database import get_connection
+from sqlalchemy import text
+from nl2sql.database import db_manager
 
 def execute_sql(sql_query: str, timeout: int = 10) -> List[Dict[str, Any]]:
     """
@@ -18,34 +18,17 @@ def execute_sql(sql_query: str, timeout: int = 10) -> List[Dict[str, Any]]:
     """
     conn = None
     try:
-        # Get database connection
-        conn = get_connection()
-        conn.row_factory = sqlite3.Row  # Enable column name access
-        
-        # Set timeout
-        conn.execute(f"PRAGMA busy_timeout = {timeout * 1000}")
-        
-        # Execute query
-        cursor = conn.cursor()
-        cursor.execute(sql_query)
-        
-        # Fetch results
-        rows = cursor.fetchall()
-        
-        # Convert to list of dictionaries
-        results = []
-        for row in rows:
-            results.append(dict(row))
-        
-        return results
-        
-    except sqlite3.Error as e:
-        raise Exception(f"Database error: {str(e)}")
+        # Get database connection from sqlalchemy manager
+        with db_manager.get_connection() as conn:
+            # Execute query using text() for security and compatibility
+            result = conn.execute(text(sql_query))
+            
+            # Fetch results and convert to list of dictionaries
+            # result.mappings() provides a dictionary-like interface for rows
+            return [dict(row) for row in result.mappings()]
+            
     except Exception as e:
         raise Exception(f"Execution error: {str(e)}")
-    finally:
-        if conn:
-            conn.close()
 
 def execute_sql_with_limit(sql_query: str, max_rows: int = 100) -> Dict[str, Any]:
     """

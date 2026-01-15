@@ -8,19 +8,34 @@ python-multipart==0.0.6
 sqlalchemy==2.0.25
 
 # LLM & Agentic Framework
-google-generativeai==0.3.2
+# google-genai removed - using Cerebras SDK instead
 langchain==0.1.4
-langchain-google-genai==0.0.6
+# langchain-google-genai==0.0.6 # Removed - using Cerebras
 langgraph==0.0.20
 langchain-community==0.0.16
 
+# AI & LLM
+cerebras-cloud-sdk>=1.0.0
+sentence-transformers==2.2.2
+faiss-cpu==1.7.4
+
+# Database
+psycopg2-binary==2.9.9
+sqlalchemy==2.0.25
+
 # Vector Store & Embeddings
-sentence-transformers==2.3.1
-faiss-cpu==1.8.0
+# sentence-transformers==2.3.1 # Moved to AI & LLM and version updated
+# faiss-cpu==1.8.0 # Moved to AI & LLM and version updated
 numpy==1.26.3
 
 # SQL Validation & Parsing
 sqlglot==20.11.0
+
+# Utilities
+networkx==3.2.1
+flask==3.0.0
+flask-cors==4.0.0
+pydantic==2.5.2
 
 # Environment & Configuration
 python-dotenv==1.0.0

@@ -9,6 +9,7 @@ import sys
 import os
 from datetime import datetime
 from typing import Dict, List, Any
+from collections import Counter
 
 # Add parent directory to path
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -29,14 +30,32 @@ class TestRunner:
         with open(self.test_file, 'r', encoding='utf-8') as f:
             return json.load(f)
     
+    def compare_results(self, generated_rows: List[Dict], expected_rows: List[Dict]) -> bool:
+        """
+        Compare two result sets for equality, ignoring row order.
+        """
+        if len(generated_rows) != len(expected_rows):
+            return False
+            
+        # Convert rows to frozensets of items for order-independent comparison
+        # This works if rows are dictionaries of simple types
+        try:
+            gen_sets = Counter([frozenset(row.items()) for row in generated_rows])
+            exp_sets = Counter([frozenset(row.items()) for row in expected_rows])
+            return gen_sets == exp_sets
+        except Exception:
+            # Fallback for complex row types or comparison failures
+            return str(generated_rows) == str(expected_rows)
+
     def run_single_query_test(self, question: str, expected_sql: str, 
                              difficulty: str, strategy: int) -> Dict[str, Any]:
-        """Run a single query test and collect metrics."""
+        """Run a single query test and collect metrics including Execution Accuracy."""
         result = {
             'question': question,
             'expected_sql': expected_sql,
             'difficulty': difficulty,
             'strategy': strategy,
+            'execution_accuracy': False
         }
         
         try:
@@ -58,15 +77,29 @@ class TestRunner:
                 result['error'] = msg
                 return result
             
-            # Execute SQL
+            # Execute Generated SQL
             try:
                 exec_start = time.time()
-                exec_result = execute_sql_with_limit(generated_sql, max_rows=100)
+                gen_exec_result = execute_sql_with_limit(generated_sql, max_rows=100)
                 exec_time = (time.time() - exec_start) * 1000  # ms
                 
                 result['execution_time_ms'] = round(exec_time, 2)
                 result['execution_success'] = True
-                result['row_count'] = len(exec_result.get('rows', []))
+                result['row_count'] = len(gen_exec_result.get('data', []))
+                
+                # Execute Expected SQL for comparison
+                if expected_sql:
+                    try:
+                        exp_exec_result = execute_sql_with_limit(expected_sql, max_rows=100)
+                        
+                        # Compare results
+                        is_accurate = self.compare_results(
+                            gen_exec_result.get('data', []), 
+                            exp_exec_result.get('data', [])
+                        )
+                        result['execution_accuracy'] = is_accurate
+                    except Exception as e:
+                        logger.warning(f"Could not execute expected SQL: {e}")
                 
             except Exception as e:
                 result['execution_success'] = False
@@ -111,11 +144,11 @@ class TestRunner:
                 
                 # Print result
                 if result.get('execution_success', False):
-                    print(f"  ✓ Success | Gen: {result['generation_time_ms']}ms | "
+                    print(f"  V Success | Gen: {result['generation_time_ms']}ms | "
                           f"Exec: {result['execution_time_ms']}ms | "
                           f"Rows: {result['row_count']}")
                 else:
-                    print(f"  ✗ Failed | Error: {result.get('error', 'Unknown')[:50]}")
+                    print(f"  X Failed | Error: {result.get('error', 'Unknown')[:50]}")
         
         print(f"\n{'=' * 80}")
         print("Test suite completed!")
@@ -144,9 +177,9 @@ class TestRunner:
                         'difficulty': query['difficulty'],
                         'comparison': comparison
                     })
-                    print(f"  ✓ Comparison complete\n")
+                    print(f"  V Comparison complete\n")
                 except Exception as e:
-                    print(f"  ✗ Error: {str(e)}\n")
+                    print(f"  X Error: {str(e)}\n")
     
     def calculate_metrics(self) -> Dict[str, Any]:
         """Calculate aggregate metrics from test results."""
@@ -162,6 +195,7 @@ class TestRunner:
             total = len(strategy_results)
             successful = len([r for r in strategy_results if r.get('execution_success', False)])
             valid = len([r for r in strategy_results if r.get('valid', False)])
+            accurate = len([r for r in strategy_results if r.get('execution_accuracy', False)])
             
             gen_times = [r['generation_time_ms'] for r in strategy_results if 'generation_time_ms' in r]
             exec_times = [r['execution_time_ms'] for r in strategy_results if 'execution_time_ms' in r]
@@ -172,17 +206,22 @@ class TestRunner:
                 diff_results = [r for r in strategy_results if r['difficulty'] == diff]
                 if diff_results:
                     diff_success = len([r for r in diff_results if r.get('execution_success', False)])
+                    diff_accurate = len([r for r in diff_results if r.get('execution_accuracy', False)])
                     difficulties[diff] = {
                         'total': len(diff_results),
                         'successful': diff_success,
-                        'success_rate': round((diff_success / len(diff_results)) * 100, 2)
+                        'accurate': diff_accurate,
+                        'success_rate': round((diff_success / len(diff_results)) * 100, 2),
+                        'accuracy_rate': round((diff_accurate / len(diff_results)) * 100, 2)
                     }
             
             metrics['strategies'][strategy_name] = {
                 'total_queries': total,
                 'successful_executions': successful,
+                'accurate_executions': accurate,
                 'valid_queries': valid,
                 'success_rate': round((successful / total) * 100, 2) if total > 0 else 0,
+                'accuracy_rate': round((accurate / total) * 100, 2) if total > 0 else 0,
                 'validation_rate': round((valid / total) * 100, 2) if total > 0 else 0,
                 'avg_generation_time_ms': round(sum(gen_times) / len(gen_times), 2) if gen_times else 0,
                 'avg_execution_time_ms': round(sum(exec_times) / len(exec_times), 2) if exec_times else 0,
@@ -217,8 +256,10 @@ class TestRunner:
                 f.write(f"|--------|-------|\n")
                 f.write(f"| Total Queries | {stats['total_queries']} |\n")
                 f.write(f"| Successful Executions | {stats['successful_executions']} |\n")
+                f.write(f"| Accurate Executions | {stats['accurate_executions']} |\n")
                 f.write(f"| Valid Queries | {stats['valid_queries']} |\n")
-                f.write(f"| **Success Rate** | **{stats['success_rate']}%** |\n")
+                f.write(f"| Success Rate | {stats['success_rate']}% |\n")
+                f.write(f"| **Accuracy Rate** | **{stats['accuracy_rate']}%** |\n")
                 f.write(f"| Validation Rate | {stats['validation_rate']}% |\n")
                 f.write(f"| Avg Generation Time | {stats['avg_generation_time_ms']} ms |\n")
                 f.write(f"| Avg Execution Time | {stats['avg_execution_time_ms']} ms |\n")
@@ -227,11 +268,12 @@ class TestRunner:
                 
                 # By difficulty
                 f.write("#### Performance by Difficulty\n\n")
-                f.write("| Difficulty | Total | Successful | Success Rate |\n")
-                f.write("|------------|-------|------------|-------------|\n")
+                f.write("| Difficulty | Total | Successful | Accurate | Success Rate | Accuracy |\n")
+                f.write("|------------|-------|------------|----------|--------------|----------|\n")
                 for diff, diff_stats in stats['by_difficulty'].items():
                     f.write(f"| {diff.capitalize()} | {diff_stats['total']} | "
-                           f"{diff_stats['successful']} | {diff_stats['success_rate']}% |\n")
+                           f"{diff_stats['successful']} | {diff_stats['accurate']} | "
+                           f"{diff_stats['success_rate']}% | {diff_stats['accuracy_rate']}% |\n")
                 f.write("\n")
             
             # Detailed Results
@@ -244,7 +286,8 @@ class TestRunner:
                 strategy_results = [r for r in self.results if r['strategy'] == strategy]
                 
                 for idx, result in enumerate(strategy_results, 1):
-                    status = "✓ PASS" if result.get('execution_success', False) else "✗ FAIL"
+                    status = "✓ ACCURATE" if result.get('execution_accuracy', False) else \
+                             ("✓ PASS (Exec Only)" if result.get('execution_success', False) else "✗ FAIL")
                     f.write(f"#### Test {idx}: {status}\n\n")
                     f.write(f"**Question:** {result['question']}\n\n")
                     f.write(f"**Difficulty:** {result['difficulty']}\n\n")
@@ -280,7 +323,7 @@ class TestRunner:
                     
                     f.write("---\n\n")
         
-        print(f"\n✓ Report generated: {output_file}")
+        print(f"\nV Report generated: {output_file}")
     
     def save_raw_results(self, output_file: str):
         """Save raw results as JSON for further analysis."""
@@ -294,15 +337,28 @@ class TestRunner:
         with open(output_file, 'w', encoding='utf-8') as f:
             json.dump(data, f, indent=2)
         
-        print(f"✓ Raw results saved: {output_file}")
+        print(f"V Raw results saved: {output_file}")
 
 
 def main():
     """Main execution function."""
+    import argparse
+    
+    parser = argparse.ArgumentParser(description='Run NL2SQL evaluation.')
+    parser.add_argument('--test-file', type=str, default='test_queries.json',
+                        help='JSON file containing test queries (default: test_queries.json)')
+    args = parser.parse_args()
+
     # File paths
-    test_file = os.path.join(os.path.dirname(__file__), 'test_queries.json')
+    if os.path.isabs(args.test_file):
+        test_file = args.test_file
+    else:
+        test_file = os.path.join(os.path.dirname(__file__), args.test_file)
+        
     results_md = os.path.join(os.path.dirname(__file__), 'test_results.md')
     results_json = os.path.join(os.path.dirname(__file__), 'test_results.json')
+    
+    print(f"Running evaluation using test file: {test_file}")
     
     # Create test runner
     runner = TestRunner(test_file)

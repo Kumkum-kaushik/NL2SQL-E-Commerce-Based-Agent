@@ -11,7 +11,7 @@ import threading
 from nl2sql.generator import nl_to_sql, nl_to_sql_with_strategy_comparison
 from nl2sql.validator import validate_sql
 from nl2sql.executor import execute_sql, execute_sql_with_limit
-from nl2sql.database import get_schema_info
+from nl2sql.database import db_manager
 from nl2sql.llm_client import get_cache_stats, get_rate_limit_stats, clear_cache
 
 app = FastAPI(
@@ -168,19 +168,11 @@ def validate_only(req: ValidateRequest):
         raise HTTPException(status_code=500, detail=str(e))
 
 @app.get("/api/schema")
-def get_schema():
-    """
-    Get database schema information.
-    
-    Returns:
-        Schema information for all tables
-    """
+async def get_schema(request: Request):
+    """Get database schema information."""
     try:
-        schema_info = get_schema_info()
-        return {
-            "database": "SQLite",
-            "tables": schema_info
-        }
+        schema = db_manager.get_schema_info()
+        return schema
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
