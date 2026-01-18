@@ -1,47 +1,28 @@
 # Web Framework
-fastapi==0.109.0
-uvicorn[standard]==0.27.0
-pydantic==2.5.3
-python-multipart==0.0.6
+fastapi>=0.109.0
+uvicorn[standard]>=0.27.0
+python-multipart>=0.0.6
 
 # Database
-sqlalchemy==2.0.25
+sqlalchemy>=2.0.25
+psycopg2-binary>=2.9.9
 
-# LLM & Agentic Framework
-# google-genai removed - using Cerebras SDK instead
-langchain==0.1.4
-# langchain-google-genai==0.0.6 # Removed - using Cerebras
-langgraph==0.0.20
-langchain-community==0.0.16
+# Phidata Framework & LLM
+phidata>=2.0.0
+google-generativeai>=0.3.0
 
-# AI & LLM
-cerebras-cloud-sdk>=1.0.0
-sentence-transformers==2.2.2
-faiss-cpu==1.7.4
-
-# Database
-psycopg2-binary==2.9.9
-sqlalchemy==2.0.25
-
-# Vector Store & Embeddings
-# sentence-transformers==2.3.1 # Moved to AI & LLM and version updated
-# faiss-cpu==1.8.0 # Moved to AI & LLM and version updated
-numpy==1.26.3
-
-# SQL Validation & Parsing
-sqlglot==20.11.0
+# Vector Database
+pinecone>=5.0.0
 
 # Utilities
-networkx==3.2.1
-flask==3.0.0
-flask-cors==4.0.0
-pydantic==2.5.2
+numpy>=1.26.0
+networkx>=3.2.0
+
+# SQL Validation & Parsing
+sqlglot>=20.11.0
 
 # Environment & Configuration
-python-dotenv==1.0.0
+python-dotenv>=1.0.0
 
 # Rate Limiting & Caching
-cachetools==5.3.2
-
-# Optional UI
-streamlit==1.30.0
+cachetools>=5.3.0

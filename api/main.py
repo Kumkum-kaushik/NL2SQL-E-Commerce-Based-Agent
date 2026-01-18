@@ -8,16 +8,16 @@ import os
 from collections import defaultdict
 import threading
 
-from nl2sql.generator import nl_to_sql, nl_to_sql_with_strategy_comparison
+from nl2sql.agents.team import process_nl2sql_request
 from nl2sql.validator import validate_sql
 from nl2sql.executor import execute_sql, execute_sql_with_limit
 from nl2sql.database import db_manager
-from nl2sql.llm_client import get_cache_stats, get_rate_limit_stats, clear_cache
+# Note: Cache and rate limit stats removed as Gemini handles this differently
 
 app = FastAPI(
     title="NL2SQL E-Commerce API",
-    description="Convert natural language to SQL queries using Gemini AI",
-    version="1.0.0"
+    description="Convert natural language to SQL queries using Google Gemini AI and Phidata Agent Team",
+    version="2.0.0"
 )
 
 # Configure CORS
@@ -88,15 +88,17 @@ def root():
     """API health check."""
     return {
         "message": "NL2SQL E-commerce API is running",
-        "version": "1.0.0",
+        "version": "2.0.0",
+        "framework": "Phidata",
         "database": "SQLite",
-        "llm": "Gemini 1.5 Flash"
+        "vector_db": "Pinecone",
+        "llm": "Google Gemini 1.5 Flash"
     }
 
 @app.post("/api/nl2sql")
 def generate_and_execute(req: NL2SQLRequest):
     """
-    Convert natural language to SQL and optionally execute.
+    Convert natural language to SQL using Phidata Agent Team and optionally execute.
     
     Args:
         question: Natural language question
@@ -105,43 +107,18 @@ def generate_and_execute(req: NL2SQLRequest):
         max_rows: Maximum rows to return
     
     Returns:
-        Generated SQL and optionally execution results
+        Generated SQL and optionally execution results with workflow details
     """
-    start_time = time.time()
-    
     try:
-        # Generate SQL
-        sql = nl_to_sql(req.question, strategy=req.strategy)
-        generation_time = (time.time() - start_time) * 1000  # ms
+        # Use agent team workflow
+        result = process_nl2sql_request(
+            question=req.question,
+            execute=req.execute,
+            strategy=req.strategy,
+            max_rows=req.max_rows
+        )
         
-        # Validate SQL
-        valid, msg = validate_sql(sql)
-        if not valid:
-            return {
-                "question": req.question,
-                "sql": sql,
-                "valid": False,
-                "error": msg,
-                "generation_time_ms": round(generation_time, 2)
-            }
-        
-        response = {
-            "question": req.question,
-            "sql": sql,
-            "valid": True,
-            "generation_time_ms": round(generation_time, 2)
-        }
-        
-        # Execute if requested
-        if req.execute:
-            exec_start = time.time()
-            result = execute_sql_with_limit(sql, max_rows=req.max_rows)
-            exec_time = (time.time() - exec_start) * 1000  # ms
-            
-            response["execution_time_ms"] = round(exec_time, 2)
-            response["result"] = result
-        
-        return response
+        return result
         
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
@@ -173,62 +150,5 @@ async def get_schema(request: Request):
     try:
         schema = db_manager.get_schema_info()
         return schema
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
-
-@app.post("/api/compare-strategies")
-def compare_strategies(question: str):
-    """
-    Compare both prompt strategies for a question.
-    
-    Args:
-        question: Natural language question
-    
-    Returns:
-        Results from both strategies
-    """
-    try:
-        result = nl_to_sql_with_strategy_comparison(question)
-        return result
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
-
-@app.get("/api/stats/cache")
-def get_cache_statistics():
-    """
-    Get cache statistics.
-    
-    Returns:
-        Cache hits, misses, size, and hit rate
-    """
-    try:
-        return get_cache_stats()
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
-
-@app.get("/api/stats/rate-limit")
-def get_rate_limit_statistics():
-    """
-    Get rate limiter statistics.
-    
-    Returns:
-        Request counts, tokens remaining, and limits
-    """
-    try:
-        return get_rate_limit_stats()
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
-
-@app.post("/api/cache/clear")
-def clear_cache_endpoint():
-    """
-    Clear the cache.
-    
-    Returns:
-        Success message
-    """
-    try:
-        clear_cache()
-        return {"message": "Cache cleared successfully"}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
