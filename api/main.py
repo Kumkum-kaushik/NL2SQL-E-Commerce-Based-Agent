@@ -152,3 +152,16 @@ async def get_schema(request: Request):
         return schema
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/api/rate-limit-stats")
+async def get_rate_limit_stats():
+    """Get current rate limiter statistics for monitoring."""
+    try:
+        from nl2sql.phidata_setup import get_rate_limiter_stats
+        stats = get_rate_limiter_stats()
+        return {
+            "gemini_rate_limiter": stats,
+            "status": "Rate limiting active"
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))

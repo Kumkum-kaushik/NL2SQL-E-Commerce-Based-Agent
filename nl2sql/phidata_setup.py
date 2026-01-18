@@ -1,16 +1,19 @@
 """
 Phidata Setup Module
-Initializes Gemini LLM, GeminiEmbedder, and Pinecone Vector Database
+Initializes Gemini LLM, GeminiEmbedder, and Pinecone Vector Database with Rate Limiting
 """
 import os
 import logging
+import time
 from pathlib import Path
 from dotenv import load_dotenv
 from phi.model.google import Gemini
 from phi.embedder.google import GeminiEmbedder
 from phi.vectordb.pineconedb import PineconeDB
 from phi.knowledge.text import TextKnowledgeBase
+from pinecone import ServerlessSpec
 import json
+from nl2sql.rate_limiter import get_rate_limiter
 
 # Configure logging
 logging.basicConfig(
@@ -37,15 +40,70 @@ if not PINECONE_API_KEY:
     raise ValueError("PINECONE_API_KEY is required")
 logger.info(f"Pinecone API Key loaded: {PINECONE_API_KEY[:10]}...")
 
+# Rate Limiting Configuration for Gemini
+GEMINI_RPM_LIMIT = int(os.getenv("GEMINI_RPM_LIMIT", 4))  # Free tier: 5 requests/min (using 4 for safety)
+GEMINI_RPD_LIMIT = int(os.getenv("GEMINI_RPD_LIMIT", 100))  # Conservative daily limit
+
+# Initialize rate limiter for Gemini API
+gemini_rate_limiter = get_rate_limiter(rpm=GEMINI_RPM_LIMIT, rpd=GEMINI_RPD_LIMIT)
+logger.info(f"Gemini rate limiter initialized: {GEMINI_RPM_LIMIT} RPM, {GEMINI_RPD_LIMIT} RPD")
+
+class RateLimitedGemini(Gemini):
+    """Gemini model wrapper with rate limiting and retry logic"""
+    
+    def response(self, messages, **kwargs):
+        """Generate response with rate limiting and retry logic"""
+        max_retries = 3
+        base_delay = 1
+        
+        for attempt in range(max_retries):
+            try:
+                # Check rate limiter before making request
+                if not gemini_rate_limiter.acquire(blocking=True, timeout=60):
+                    wait_time = gemini_rate_limiter.get_wait_time()
+                    logger.warning(f"Rate limit exceeded, waiting {wait_time:.1f}s")
+                    time.sleep(wait_time + 1)  # Add 1s buffer
+                    
+                # Make the API call
+                logger.debug(f"Making Gemini API call (attempt {attempt + 1}/{max_retries})")
+                return super().response(messages, **kwargs)
+                
+            except Exception as e:
+                error_str = str(e)
+                if "429" in error_str or "quota" in error_str.lower() or "rate" in error_str.lower():
+                    # Extract retry delay from error message if available
+                    retry_delay = base_delay * (2 ** attempt)  # Exponential backoff
+                    
+                    # Try to parse retry delay from Google's error message
+                    if "retry in" in error_str:
+                        try:
+                            import re
+                            match = re.search(r'retry in ([\d.]+)s', error_str)
+                            if match:
+                                retry_delay = float(match.group(1)) + 1  # Add 1s buffer
+                        except:
+                            pass
+                    
+                    if attempt < max_retries - 1:
+                        logger.warning(f"Rate limit hit, retrying in {retry_delay:.1f}s (attempt {attempt + 1}/{max_retries})")
+                        time.sleep(retry_delay)
+                        continue
+                    else:
+                        logger.error(f"Rate limit exceeded after {max_retries} attempts")
+                        raise
+                else:
+                    # Non-rate-limit error, re-raise immediately
+                    raise
+
 # Gemini Model Configuration
-GEMINI_MODEL = os.getenv("GEMINI_MODEL", "gemini-1.5-flash")
+GEMINI_MODEL = os.getenv("GEMINI_MODEL", "models/gemini-2.5-flash")
 GEMINI_EMBEDDING_MODEL = os.getenv("GEMINI_EMBEDDING_MODEL", "models/text-embedding-004")
 
-logger.info(f"Initializing Gemini model: {GEMINI_MODEL}")
-gemini_model = Gemini(
+logger.info(f"Initializing Gemini model with rate limiting: {GEMINI_MODEL}")
+gemini_model = RateLimitedGemini(
     id=GEMINI_MODEL,
 )
-logger.info("Gemini model initialized successfully")
+logger.info("Rate-limited Gemini model initialized successfully")
 
 # Gemini Embedder Configuration
 logger.info(f"Initializing GeminiEmbedder with model: {GEMINI_EMBEDDING_MODEL}")
@@ -66,12 +124,10 @@ pinecone_db = PineconeDB(
     dimension=PINECONE_DIMENSION,
     metric="cosine",
     api_key=PINECONE_API_KEY,
-    spec={
-        "serverless": {
-            "cloud": PINECONE_CLOUD,
-            "region": PINECONE_REGION,
-        }
-    },
+    spec=ServerlessSpec(
+        cloud=PINECONE_CLOUD,
+        region=PINECONE_REGION
+    ),
     embedder=gemini_embedder,
     use_hybrid_search=False,
 )
@@ -111,14 +167,29 @@ def create_knowledge_base_from_examples(examples_file: str = None) -> TextKnowle
             logger.debug(f"Example {i+1}: {example['question'][:50]}...")
         
         logger.info(f"Creating knowledge base with {len(texts)} text entries")
+        # Create a temporary path for the knowledge base
+        kb_path = Path("temp_knowledge_base")
         knowledge_base = TextKnowledgeBase(
+            path=kb_path,
             texts=texts,
             vector_db=pinecone_db,
         )
         
         logger.info("Loading knowledge base into Pinecone (this may take a moment)...")
-        knowledge_base.load(upsert=True)
-        logger.info("Knowledge base loaded successfully")
+        try:
+            knowledge_base.load(upsert=True)
+            logger.info("Knowledge base loaded successfully into Pinecone")
+        except Exception as pinecone_error:
+            logger.warning(f"Pinecone setup failed: {str(pinecone_error)}")
+            logger.info("Falling back to local knowledge base without vector database...")
+            
+            # Create fallback knowledge base without vector database
+            knowledge_base = TextKnowledgeBase(
+                path=kb_path,
+                texts=texts,
+            )
+            knowledge_base.load(upsert=True)
+            logger.info("Local knowledge base loaded successfully")
         
         return knowledge_base
         
@@ -140,10 +211,15 @@ def get_knowledge_base() -> TextKnowledgeBase:
 # Export configured instances
 __all__ = [
     'gemini_model',
-    'gemini_embedder',
+    'gemini_embedder', 
     'pinecone_db',
     'get_knowledge_base',
-    'create_knowledge_base_from_examples'
+    'create_knowledge_base_from_examples',
+    'gemini_rate_limiter'  # Export rate limiter for monitoring
 ]
 
-logger.info("Phidata setup module loaded successfully")
+def get_rate_limiter_stats():
+    """Get current rate limiter statistics"""
+    return gemini_rate_limiter.get_stats()
+
+logger.info("Phidata setup module loaded successfully with rate limiting enabled")

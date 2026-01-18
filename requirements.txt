@@ -12,7 +12,8 @@ phidata>=2.0.0
 google-generativeai>=0.3.0
 
 # Vector Database
-pinecone>=5.0.0
+# Using newer pinecone version with proper configuration support
+pinecone>=4.0.0,<5.0.0
 
 # Utilities
 numpy>=1.26.0
@@ -26,3 +27,7 @@ python-dotenv>=1.0.0
 
 # Rate Limiting & Caching
 cachetools>=5.3.0
+
+# Compatibility fixes for dependency conflicts
+packaging>=23.2,<24.0  # Compatible with langchain-core and streamlit
+protobuf>=3.20,<5.0    # Compatible with streamlit

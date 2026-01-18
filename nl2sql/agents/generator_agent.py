@@ -30,11 +30,27 @@ def extract_relevant_tables(question: str) -> list:
     # Heuristic for common mentions
     if not relevant:
         logger.debug("No tables found by name matching, using heuristics")
-        if 'product' in question.lower(): relevant.append('products')
-        if 'customer' in question.lower(): relevant.append('customers')
-        if 'order' in question.lower(): relevant.append('orders')
-        if 'payment' in question.lower(): relevant.append('payments')
-        if 'item' in question.lower(): relevant.append('order_items')
+        question_lower = question.lower()
+        if 'product' in question_lower: 
+            relevant.append('products')
+        if 'customer' in question_lower: 
+            relevant.append('customers')
+        if 'order' in question_lower: 
+            relevant.append('orders')
+            # For order-related queries, often need order_items for details
+            if 'detail' in question_lower or 'item' in question_lower:
+                relevant.append('order_items')
+        if 'payment' in question_lower: 
+            relevant.append('payments')
+        if 'item' in question_lower or 'detail' in question_lower: 
+            relevant.append('order_items')
+    else:
+        # Even if we found tables by name, check for additional context
+        question_lower = question.lower()
+        if 'order' in question_lower and ('detail' in question_lower or 'item' in question_lower):
+            if 'order_items' not in relevant:
+                relevant.append('order_items')
+                logger.debug("Added order_items due to 'order details' context")
     
     relevant = list(set(relevant))
     logger.info(f"Identified {len(relevant)} relevant tables: {relevant}")
@@ -90,9 +106,14 @@ def create_generator_agent(strategy: int = 1) -> Agent:
     """
     logger.info(f"Creating Generator Agent with strategy {strategy}")
     
-    # Get knowledge base for RAG
-    knowledge_base = get_knowledge_base()
-    logger.debug(f"Knowledge base loaded: {knowledge_base is not None}")
+    # Get knowledge base for RAG (with fallback)
+    try:
+        knowledge_base = get_knowledge_base()
+        logger.debug(f"Knowledge base loaded: {knowledge_base is not None}")
+    except Exception as kb_error:
+        logger.warning(f"Knowledge base creation failed: {str(kb_error)}")
+        logger.info("Proceeding without knowledge base (will use schema-only approach)")
+        knowledge_base = None
     
     # Define instructions based on strategy
     if strategy == 1:
@@ -127,20 +148,29 @@ def create_generator_agent(strategy: int = 1) -> Agent:
     
     logger.debug(f"Agent instructions: {len(instructions)} rules defined")
     
-    # Create agent
-    agent = Agent(
-        name="SQLGenerator",
-        role="Convert natural language to SQL queries",
-        model=gemini_model,
-        knowledge=knowledge_base,
-        search_knowledge=True,
-        instructions=instructions,
-        markdown=False,
-        show_tool_calls=False,
-        debug_mode=False,
-    )
+    # Create agent (with optional knowledge base)
+    agent_kwargs = {
+        "name": "SQLGenerator",
+        "role": "Convert natural language to SQL queries",
+        "model": gemini_model,
+        "instructions": instructions,
+        "markdown": False,
+        "show_tool_calls": False,
+        "debug_mode": False,
+    }
     
-    logger.info("Generator Agent created successfully")
+    # Only add knowledge base if available
+    if knowledge_base is not None:
+        agent_kwargs.update({
+            "knowledge": knowledge_base,
+            "search_knowledge": True,
+        })
+        logger.info("Generator Agent created with knowledge base")
+    else:
+        logger.info("Generator Agent created without knowledge base (schema-only mode)")
+    
+    agent = Agent(**agent_kwargs)
+
     return agent
 
 def generate_sql(question: str, strategy: int = 1) -> str:
@@ -168,8 +198,19 @@ def generate_sql(question: str, strategy: int = 1) -> str:
         agent = create_generator_agent(strategy=strategy)
         
         # Prepare prompt with schema context
+        schema_info = db_manager.get_schema_info()
+        available_tables = list(schema_info.keys())
+        
         prompt = f"""Database Schema Context:
 {schema}
+
+Available Tables: {', '.join(available_tables)}
+Key Table Mappings:
+- "customers" table for customer information
+- "products" table for product information  
+- "orders" table for order information
+- "order_items" table for order details/items (use this for order details)
+- "payments" table for payment information
 
 Question: {question}
 
