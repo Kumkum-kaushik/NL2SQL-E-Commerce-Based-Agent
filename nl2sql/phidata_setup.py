@@ -11,6 +11,8 @@ from phi.model.google import Gemini
 from phi.embedder.google import GeminiEmbedder
 from phi.vectordb.pineconedb import PineconeDB
 from phi.knowledge.text import TextKnowledgeBase
+from phi.model.openai.like import OpenAILike
+from phi.model.cohere import CohereChat
 from pinecone import ServerlessSpec
 import json
 from nl2sql.rate_limiter import get_rate_limiter
@@ -95,15 +97,37 @@ class RateLimitedGemini(Gemini):
                     # Non-rate-limit error, re-raise immediately
                     raise
 
-# Gemini Model Configuration
-GEMINI_MODEL = os.getenv("GEMINI_MODEL", "models/gemini-2.5-flash")
+# Model Configuration - Use Cohere as primary, Gemini as fallback
+USE_COHERE = os.getenv("CO_API_KEY") and os.getenv("CO_API_KEY") != "your_cohere_api_key_here"
+COHERE_API_KEY = os.getenv("CO_API_KEY")
+COHERE_MODEL = os.getenv("COHERE_MODEL", "command-r-08-2024")
+GEMINI_MODEL = os.getenv("GEMINI_MODEL", "models/gemini-pro-latest")
 GEMINI_EMBEDDING_MODEL = os.getenv("GEMINI_EMBEDDING_MODEL", "models/text-embedding-004")
 
-logger.info(f"Initializing Gemini model with rate limiting: {GEMINI_MODEL}")
-gemini_model = RateLimitedGemini(
-    id=GEMINI_MODEL,
-)
-logger.info("Rate-limited Gemini model initialized successfully")
+if USE_COHERE:
+    logger.info(f"Using Cohere as primary model: {COHERE_MODEL}")
+    try:
+        primary_model = CohereChat(
+            id=COHERE_MODEL,
+            api_key=COHERE_API_KEY,
+            temperature=0.1,
+            max_tokens=1000
+        )
+        logger.info("Cohere model configured successfully")
+    except Exception as e:
+        logger.warning(f"Cohere model configuration failed: {str(e)}")
+        logger.info(f"Falling back to Gemini model: {GEMINI_MODEL}")
+        primary_model = RateLimitedGemini(id=GEMINI_MODEL)
+else:
+    logger.info(f"Using Gemini as primary model: {GEMINI_MODEL}")
+    primary_model = RateLimitedGemini(id=GEMINI_MODEL)
+
+# Create fallback model for runtime failures
+fallback_model = RateLimitedGemini(id=GEMINI_MODEL)
+
+# Use model directly - Cohere is reliable enough without wrapper
+final_model = primary_model
+logger.info(f"Using model directly: {getattr(final_model, 'id', 'unknown')}")
 
 # Gemini Embedder Configuration
 logger.info(f"Initializing GeminiEmbedder with model: {GEMINI_EMBEDDING_MODEL}")
@@ -209,8 +233,11 @@ def get_knowledge_base() -> TextKnowledgeBase:
     return _knowledge_base
 
 # Export configured instances
+gemini_model = final_model  # For backwards compatibility
 __all__ = [
     'gemini_model',
+    'primary_model',
+    'final_model',
     'gemini_embedder', 
     'pinecone_db',
     'get_knowledge_base',
