@@ -148,26 +148,19 @@ def create_generator_agent(strategy: int = 1) -> Agent:
     
     logger.debug(f"Agent instructions: {len(instructions)} rules defined")
     
-    # Create agent (with optional knowledge base)
+    # Create agent WITHOUT knowledge base to prevent function call loops
     agent_kwargs = {
         "name": "SQLGenerator",
         "role": "Convert natural language to SQL queries",
-        "model": gemini_model,
+        "model": gemini_model,  # Use the configured model from phidata_setup
         "instructions": instructions,
         "markdown": False,
         "show_tool_calls": False,
         "debug_mode": False,
     }
     
-    # Only add knowledge base if available
-    if knowledge_base is not None:
-        agent_kwargs.update({
-            "knowledge": knowledge_base,
-            "search_knowledge": True,
-        })
-        logger.info("Generator Agent created with knowledge base")
-    else:
-        logger.info("Generator Agent created without knowledge base (schema-only mode)")
+    # DON'T add knowledge base to prevent search function calls that cause loops
+    logger.info("Generator Agent created without knowledge base (no function calls)")
     
     agent = Agent(**agent_kwargs)
 
@@ -197,12 +190,21 @@ def generate_sql(question: str, strategy: int = 1) -> str:
         # Create generator agent
         agent = create_generator_agent(strategy=strategy)
         
-        # Prepare prompt with schema context
+        # Prepare prompt with actual database schema context
         schema_info = db_manager.get_schema_info()
         available_tables = list(schema_info.keys())
         
+        # Build detailed schema with columns
+        detailed_schema = []
+        for table_name, columns in schema_info.items():
+            col_details = []
+            for col in columns:
+                col_str = f"{col['name']} ({col['type']}){'[PK]' if col['pk'] else ''}{'[NOT NULL]' if not col['nullable'] else ''}"
+                col_details.append(col_str)
+            detailed_schema.append(f"\n{table_name}:\n  Columns: {', '.join(col_details)}")
+        
         prompt = f"""Database Schema Context:
-{schema}
+{chr(10).join(detailed_schema)}
 
 Available Tables: {', '.join(available_tables)}
 Key Table Mappings:

@@ -20,6 +20,18 @@ def create_validator_agent() -> Agent:
     """
     logger.info("Creating Validator Agent")
     
+    # Import fresh model to avoid knowledge base contamination
+    from phi.model.cohere import CohereChat
+    import os
+    
+    # Create fresh Cohere model without any knowledge base
+    fresh_model = CohereChat(
+        id=os.getenv("COHERE_MODEL", "command-r-08-2024"),
+        api_key=os.getenv("CO_API_KEY"),
+        temperature=0.1,
+        max_tokens=500
+    )
+    
     instructions = [
         "You are an expert SQL validator.",
         "Your task is to validate SQL queries for syntax, safety, and schema correctness.",
@@ -38,7 +50,7 @@ def create_validator_agent() -> Agent:
     agent = Agent(
         name="SQLValidator",
         role="Validate SQL queries for correctness and safety",
-        model=gemini_model,
+        model=fresh_model,  # Use fresh model
         instructions=instructions,
         markdown=False,
         show_tool_calls=False,
